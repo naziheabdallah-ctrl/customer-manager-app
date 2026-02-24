@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CRM Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{p:'#2563eb',ps:'#1d4ed8',bg:'#f0f4ff',card:'#ffffff'},fontFamily:{sans:['DM Sans','sans-serif'],mono:['DM Mono','monospace']}}}}
+</script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'DM Sans',sans-serif;background:#f0f4ff;min-height:100dvh;overflow:hidden}
+.ico{font-family:'Material Symbols Rounded';font-style:normal;font-weight:400;font-size:22px;line-height:1;display:inline-flex;align-items:center;justify-content:center;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;user-select:none}
+.ico.f{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+.ico.sm{font-size:17px}
+.ico.lg{font-size:28px}
+
+/* Screens */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;background:#f0f4ff;overflow:hidden;pointer-events:none;opacity:0;transform:translateX(40px);transition:opacity .25s ease,transform .25s cubic-bezier(.4,0,.2,1)}
+.screen.active{opacity:1;transform:translateX(0);pointer-events:all}
+.screen.prev{transform:translateX(-30px);opacity:0}
+#app{position:relative;overflow:hidden}
+
+/* Scrollable content */
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.scroll-area::-webkit-scrollbar{display:none}
+
+/* Nav */
+.nav{position:absolute;bottom:0;left:0;right:0;height:68px;background:#fff;border-top:1px solid #e8eeff;display:flex;align-items:center;justify-content:space-around;padding:0 8px 8px;z-index:50}
+.nb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 14px;border-radius:12px;color:#94a3b8;font-size:10px;font-weight:700;letter-spacing:.02em;cursor:pointer;transition:color .15s,background .15s;border:none;background:transparent;outline:none}
+.nb.on{color:#2563eb;background:#eff4ff}
+.nb.on .ico{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+
+/* Inputs */
+.inp{width:100%;padding:10px 14px;border-radius:10px;background:#f1f5f9;border:1.5px solid transparent;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;color:#0f172a}
+.inp:focus{border-color:#2563eb;background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+textarea.inp{resize:none;line-height:1.5}
+.inp.error{border-color:#ef4444;background:#fff5f5}
+.err-msg{color:#ef4444;font-size:11px;margin-top:4px;display:none}
+.err-msg.show{display:block}
+
+/* Cards */
+.card{background:#fff;border-radius:16px;border:1px solid #e8eeff;box-shadow:0 1px 4px rgba(37,99,235,.06)}
+.card-hover{transition:box-shadow .15s,transform .15s;cursor:pointer}
+.card-hover:hover{box-shadow:0 4px 16px rgba(37,99,235,.12);transform:translateY(-1px)}
+.card-hover:active{transform:scale(.98)}
+
+/* Modal bottom sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-end;justify-content:center;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .2s}
+.sheet-wrap.open{opacity:1;pointer-events:all}
+.sheet{width:100%;max-width:448px;background:#fff;border-radius:24px 24px 0 0;max-height:92dvh;overflow-y:auto;transform:translateY(100%);transition:transform .28s cubic-bezier(.34,1.2,.64,1)}
+.sheet-wrap.open .sheet{transform:translateY(0)}
+.sheet-handle{width:40px;height:4px;background:#e2e8f0;border-radius:2px;margin:10px auto 0}
+
+/* Pill buttons */
+.pill{padding:6px 16px;border-radius:100px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .15s;outline:none}
+.pill.active{background:#2563eb;color:#fff}
+.pill.inactive{background:#f1f5f9;color:#64748b}
+.pill.inactive:hover{background:#e2e8f0}
+
+/* Status badges */
+.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:100px;font-size:11px;font-weight:700}
+.b-active{background:#dcfce7;color:#16a34a}
+.b-lead{background:#fef9c3;color:#a16207}
+.b-inactive{background:#f1f5f9;color:#64748b}
+.b-prospect{background:#dbeafe;color:#1d4ed8}
+.b-proposal{background:#fef3c7;color:#d97706}
+.b-negotiation{background:#f3e8ff;color:#9333ea}
+.b-won{background:#dcfce7;color:#15803d}
+.b-lost{background:#fee2e2;color:#dc2626}
+
+/* Avatar */
+.av{border-radius:100px;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden;flex-shrink:0;position:relative}
+.av img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:100px}
+
+/* Photo upload area */
+.photo-ring{position:relative;cursor:pointer}
+.photo-ring:hover .photo-overlay{opacity:1}
+.photo-overlay{position:absolute;inset:0;border-radius:100px;background:rgba(37,99,235,.55);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+
+/* Status dot */
+.sdot{width:14px;height:14px;border-radius:100px;border:3px solid #fff;position:absolute;bottom:1px;right:1px}
+.sd-active{background:#22c55e}
+.sd-lead{background:#eab308}
+.sd-inactive{background:#94a3b8}
+
+/* Toggle switch */
+.tog{width:46px;height:26px;border-radius:13px;background:#e2e8f0;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.tog.on{background:#2563eb}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.tog.on::after{transform:translateX(20px)}
+
+/* Section label */
+.sec-label{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;margin-top:4px}
+
+/* Separator row */
+.sep-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid #f1f5f9}
+.sep-row:last-child{border-bottom:none}
+
+/* FAB */
+.fab{position:absolute;bottom:80px;right:16px;width:52px;height:52px;border-radius:16px;background:#2563eb;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(37,99,235,.4);transition:transform .15s,box-shadow .15s;z-index:40}
+.fab:hover{transform:scale(1.07);box-shadow:0 6px 20px rgba(37,99,235,.5)}
+.fab:active{transform:scale(.95)}
+
+/* Toast */
+#toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-8px);background:#0f172a;color:#fff;padding:10px 18px;border-radius:100px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px;z-index:200;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* KPI card special */
+.kpi-accent{background:linear-gradient(135deg,#2563eb 0%,#1e40af 100%);color:#fff}
+
+/* Deal progress bar */
+.prog-track{height:4px;background:#e8eeff;border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;background:#2563eb;transition:width .4s ease}
+
+/* Custom field chip */
+.cf-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:8px;background:#eff4ff;color:#2563eb;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+.cf-chip:hover{background:#dbeafe}
+.cf-chip .del{color:#93c5fd;font-size:14px}
+.cf-chip .del:hover{color:#ef4444}
+
+/* Editable inline */
+.edit-inline{border:none;border-bottom:2px dashed #cbd5e1;background:transparent;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;outline:none;color:#0f172a;transition:border-color .15s;min-width:80px;max-width:180px}
+.edit-inline:focus{border-color:#2563eb}
+
+/* Danger zone */
+.danger-card{background:#fff;border:1.5px solid #fee2e2;border-radius:16px;padding:18px}
+.danger-btn{width:100%;padding:11px;border-radius:12px;border:2px solid #fee2e2;color:#ef4444;background:transparent;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s}
+.danger-btn:hover{background:#fff5f5}
+
+/* Confirm modal */
+.confirm-card{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:320px;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- Hidden file input for photo upload -->
+<input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)"/>
+
+<div class="relative mx-auto max-w-md h-dvh" id="app">
+
+<!-- ░░░░░░░░░░░ DASHBOARD ░░░░░░░░░░░ -->
+<div class="screen active" id="screen-dashboard">
+  <!-- Header -->
+  <div style="background:#fff;border-bottom:1px solid #e8eeff;padding:14px 18px 14px;flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:12px;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+        <!-- Avatar / Photo -->
+        <div class="photo-ring" onclick="triggerPhotoUpload()" title="Tap to change photo">
+          <div class="av" id="dash-av" style="width:46px;height:46px;background:#eff4ff;color:#2563eb;font-size:16px;border:2px solid #bfdbfe"></div>
+          <div class="photo-overlay"><span class="ico f sm" style="color:#fff">photo_camera</span></div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.02em">WELCOME BACK</div>
+          <input id="dash-name" class="edit-inline" maxlength="30" onblur="onNameBlur()" onkeydown="if(event.key==='Enter')this.blur()" style="width:100%"/>
+        </div>
+      </div>
+      <button onclick="navigate('settings')" style="width:38px;height:38px;border-radius:12px;border:none;background:#f0f4ff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;transition:background .15s" onmouseover="this.style.background='#e0e9ff'" onmouseout="this.style.background='#f0f4ff'">
+        <span class="ico sm">settings</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="scroll-area" style="padding:14px 14px 80px">
+    <!-- KPIs -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="card" style="padding:14px 12px">
+        <div style="font-size:22px;font-weight:800;color:#0f172a" id="kpi-c">0</div>
+        <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Customers</div>
+        <span class="ico f" style="font-size:18px;color:#2563eb;margin-top:4px;display:block">group</span>
+      </div>
+      <div class="card" style="padding:14px 12px">
+        <div style="font-size:22px;font-weight:800;color:#0f172a" id="kpi-d">0</div>
+        <div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Open Deals</div>
+        <span class="ico f" style="font-size:18px;color:#22c55e;margin-top:4px;display:block">handshake</span>
+      </div>
+      <div class="card kpi-accent" style="padding:14px 12px">
+        <div style="font-size:20px;font-weight:800;" id="kpi-r">$0</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.7);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Pipeline</div>
+        <span class="ico f" style="font-size:18px;color:rgba(255,255,255,.8);margin-top:4px;display:block">payments</span>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card" style="padding:16px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700">Customer Growth</div>
+        <div style="font-size:11px;color:#94a3b8;font-weight:600">Last 6 months</div>
+      </div>
+      <div id="dash-chart" style="display:flex;align-items:flex-end;gap:8px;height:72px"></div>
+    </div>
+
+    <!-- Recent Customers -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700">Recent Customers</div>
+      <button onclick="navigate('directory')" style="font-size:12px;color:#2563eb;font-weight:700;border:none;background:none;cursor:pointer">View all →</button>
+    </div>
+    <div id="dash-recent" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+
+    <!-- Recent Deals -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700">Recent Deals</div>
+      <button onclick="navigate('deals')" style="font-size:12px;color:#2563eb;font-weight:700;border:none;background:none;cursor:pointer">View all →</button>
+    </div>
+    <div id="dash-deals" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
+    <button onclick="openDealModal()" style="width:100%;padding:13px;border-radius:14px;border:2px dashed #bfdbfe;background:transparent;color:#93c5fd;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s" onmouseover="this.style.borderColor='#2563eb';this.style.color='#2563eb'" onmouseout="this.style.borderColor='#bfdbfe';this.style.color='#93c5fd'">
+      <span class="ico sm">add</span> Add New Deal
+    </button>
+  </div>
+
+  <nav class="nav">
+    <button class="nb on" onclick="navigate('dashboard')"><span class="ico">dashboard</span>Home</button>
+    <button class="nb" onclick="navigate('directory')"><span class="ico">group</span>Customers</button>
+    <button class="nb" onclick="navigate('deals')"><span class="ico">handshake</span>Deals</button>
+    <button class="nb" onclick="navigate('settings')"><span class="ico">settings</span>Settings</button>
+  </nav>
+</div>
+
+<!-- ░░░░░░░░░░░ DIRECTORY ░░░░░░░░░░░ -->
+<div class="screen" id="screen-directory">
+  <div style="background:#fff;border-bottom:1px solid #e8eeff;padding:14px 16px 10px;flex-shrink:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="ico f" style="color:#2563eb">group</span>
+        <span style="font-size:17px;font-weight:800">Customers</span>
+      </div>
+      <span id="dir-count" style="background:#eff4ff;color:#2563eb;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px">0</span>
+    </div>
+    <div style="position:relative;margin-bottom:10px">
+      <span class="ico sm" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#94a3b8">search</span>
+      <input id="dir-search" class="inp" style="padding-left:36px;padding-right:36px" placeholder="Search name or company…" oninput="onDirSearch(this.value)"/>
+      <button id="dir-clear" onclick="clearDirSearch()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);display:none;background:none;border:none;cursor:pointer;color:#94a3b8"><span class="ico sm">close</span></button>
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px">
+      <button class="pill active" id="chip-All" onclick="setDirFilter('All',this)">All</button>
+      <button class="pill inactive" id="chip-Active" onclick="setDirFilter('Active',this)">✓ Active</button>
+      <button class="pill inactive" id="chip-Lead" onclick="setDirFilter('Lead',this)">◈ Lead</button>
+      <button class="pill inactive" id="chip-Inactive" onclick="setDirFilter('Inactive',this)">○ Inactive</button>
+    </div>
+  </div>
+  <div class="scroll-area" id="dir-list" style="padding:12px 14px 80px;display:flex;flex-direction:column;gap:8px"></div>
+  <button class="fab" onclick="openCustomerModal()"><span class="ico f">person_add</span></button>
+  <nav class="nav">
+    <button class="nb" onclick="navigate('dashboard')"><span class="ico">dashboard</span>Home</button>
+    <button class="nb on" onclick="navigate('directory')"><span class="ico">group</span>Customers</button>
+    <button class="nb" onclick="navigate('deals')"><span class="ico">handshake</span>Deals</button>
+    <button class="nb" onclick="navigate('settings')"><span class="ico">settings</span>Settings</button>
+  </nav>
+</div>
+
+<!-- ░░░░░░░░░░░ PROFILE ░░░░░░░░░░░ -->
+<div class="screen" id="screen-profile">
+  <div style="background:#fff;border-bottom:1px solid #e8eeff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <button onclick="goBack()" style="width:36px;height:36px;border-radius:10px;border:none;background:#f0f4ff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#2563eb"><span class="ico sm">arrow_back</span></button>
+    <span style="font-size:15px;font-weight:700">Customer Profile</span>
+    <button id="p-edit-btn" style="width:36px;height:36px;border-radius:10px;border:none;background:#eff4ff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#2563eb"><span class="ico sm">edit</span></button>
+  </div>
+  <div class="scroll-area" style="padding-bottom:80px">
+    <!-- Hero -->
+    <div style="background:#fff;padding:24px 20px 20px;display:flex;flex-direction:column;align-items:center;border-bottom:1px solid #f0f4ff">
+      <div style="position:relative;margin-bottom:14px">
+        <div class="av" id="p-av" style="width:88px;height:88px;font-size:28px;border:3px solid #e8eeff"></div>
+        <div id="p-sdot" class="sdot"></div>
+      </div>
+      <div style="font-size:20px;font-weight:800;text-align:center" id="p-name"></div>
+      <div style="font-size:13px;color:#64748b;margin-top:3px" id="p-co"></div>
+      <span id="p-badge" class="badge" style="margin-top:8px"></span>
+      <!-- Quick actions -->
+      <div style="display:flex;gap:12px;margin-top:18px;width:100%;justify-content:center">
+        <button style="flex:1;max-width:80px;padding:10px 0;border-radius:14px;border:none;background:#eff4ff;color:#2563eb;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;transition:background .15s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff4ff'">
+          <span class="ico f" style="font-size:20px">call</span>Call
+        </button>
+        <button style="flex:1;max-width:80px;padding:10px 0;border-radius:14px;border:none;background:#eff4ff;color:#2563eb;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;transition:background .15s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff4ff'">
+          <span class="ico f" style="font-size:20px">mail</span>Email
+        </button>
+        <button style="flex:1;max-width:80px;padding:10px 0;border-radius:14px;border:none;background:#eff4ff;color:#2563eb;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:700;transition:background .15s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff4ff'">
+          <span class="ico f" style="font-size:20px">chat</span>Message
+        </button>
+      </div>
+    </div>
+    <!-- Details -->
+    <div style="padding:14px 14px 0">
+      <!-- Standard fields -->
+      <div class="card" style="padding:16px;margin-bottom:10px">
+        <div class="sec-label">Contact Info</div>
+        <div id="p-fields" style="display:flex;flex-direction:column;gap:12px"></div>
+      </div>
+      <!-- Custom fields -->
+      <div class="card" id="p-custom-card" style="padding:16px;margin-bottom:10px;display:none">
+        <div class="sec-label">Custom Fields</div>
+        <div id="p-custom-fields" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+      <!-- Notes -->
+      <div class="card" style="padding:16px;margin-bottom:10px">
+        <div class="sec-label">Notes</div>
+        <div style="background:#f8faff;border-radius:10px;padding:12px">
+          <p id="p-notes" style="font-size:13px;color:#475569;line-height:1.6;font-style:italic"></p>
+        </div>
+      </div>
+      <!-- Timestamps -->
+      <div class="card" style="padding:16px;margin-bottom:10px">
+        <div class="sep-row"><span style="font-size:13px;color:#94a3b8;font-weight:600">Added</span><span id="p-created" style="font-size:13px;font-weight:700"></span></div>
+        <div class="sep-row"><span style="font-size:13px;color:#94a3b8;font-weight:600">Updated</span><span id="p-updated" style="font-size:13px;font-weight:700"></span></div>
+      </div>
+      <!-- Danger -->
+      <div class="danger-card" style="margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#ef4444;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">Danger Zone</div>
+        <button id="p-del-btn" class="danger-btn"><span class="ico sm">delete</span> Delete Customer</button>
+      </div>
+    </div>
+  </div>
+  <nav class="nav">
+    <button class="nb" onclick="navigate('dashboard')"><span class="ico">dashboard</span>Home</button>
+    <button class="nb on" onclick="navigate('directory')"><span class="ico">group</span>Customers</button>
+    <button class="nb" onclick="navigate('deals')"><span class="ico">handshake</span>Deals</button>
+    <button class="nb" onclick="navigate('settings')"><span class="ico">settings</span>Settings</button>
+  </nav>
+</div>
+
+<!-- ░░░░░░░░░░░ DEALS ░░░░░░░░░░░ -->
+<div class="screen" id="screen-deals">
+  <div style="background:#fff;border-bottom:1px solid #e8eeff;padding:14px 16px 10px;flex-shrink:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="ico f" style="color:#2563eb">handshake</span>
+        <span style="font-size:17px;font-weight:800">Deals</span>
+      </div>
+      <span id="deals-count" style="background:#eff4ff;color:#2563eb;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px">0</span>
+    </div>
+    <!-- Mini KPIs -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+      <div style="background:#f0f4ff;border-radius:12px;padding:10px 8px;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:#0f172a" id="dk-open">0</div>
+        <div style="font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase">Open</div>
+      </div>
+      <div style="background:#dcfce7;border-radius:12px;padding:10px 8px;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:#16a34a" id="dk-won">0</div>
+        <div style="font-size:9px;color:#86efac;font-weight:700;text-transform:uppercase">Won</div>
+      </div>
+      <div style="background:#fee2e2;border-radius:12px;padding:10px 8px;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:#dc2626" id="dk-lost">0</div>
+        <div style="font-size:9px;color:#fca5a5;font-weight:700;text-transform:uppercase">Lost</div>
+      </div>
+      <div style="background:#eff4ff;border-radius:12px;padding:10px 8px;text-align:center">
+        <div style="font-size:15px;font-weight:800;color:#2563eb" id="dk-val">$0</div>
+        <div style="font-size:9px;color:#93c5fd;font-weight:700;text-transform:uppercase">Value</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px">
+      <button class="pill active" id="dchip-All" onclick="setDealsFilter('All',this)">All</button>
+      <button class="pill inactive" id="dchip-Prospect" onclick="setDealsFilter('Prospect',this)">Prospect</button>
+      <button class="pill inactive" id="dchip-Proposal" onclick="setDealsFilter('Proposal',this)">Proposal</button>
+      <button class="pill inactive" id="dchip-Negotiation" onclick="setDealsFilter('Negotiation',this)">Negotiation</button>
+      <button class="pill inactive" id="dchip-Won" onclick="setDealsFilter('Won',this)">Won</button>
+      <button class="pill inactive" id="dchip-Lost" onclick="setDealsFilter('Lost',this)">Lost</button>
+    </div>
+  </div>
+  <div class="scroll-area" id="deals-list" style="padding:12px 14px 80px;display:flex;flex-direction:column;gap:8px"></div>
+  <button class="fab" onclick="openDealModal()"><span class="ico f">add</span></button>
+  <nav class="nav">
+    <button class="nb" onclick="navigate('dashboard')"><span class="ico">dashboard</span>Home</button>
+    <button class="nb" onclick="navigate('directory')"><span class="ico">group</span>Customers</button>
+    <button class="nb on" onclick="navigate('deals')"><span class="ico">handshake</span>Deals</button>
+    <button class="nb" onclick="navigate('settings')"><span class="ico">settings</span>Settings</button>
+  </nav>
+</div>
+
+<!-- ░░░░░░░░░░░ SETTINGS ░░░░░░░░░░░ -->
+<div class="screen" id="screen-settings">
+  <div style="background:#fff;border-bottom:1px solid #e8eeff;padding:14px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0">
+    <span class="ico f" style="color:#2563eb">settings</span>
+    <span style="font-size:17px;font-weight:800">Settings</span>
+  </div>
+  <div class="scroll-area" style="padding:14px 14px 80px;display:flex;flex-direction:column;gap:12px">
+
+    <!-- Profile card -->
+    <div class="card" style="padding:18px">
+      <div class="sec-label">Your Profile</div>
+      <!-- Photo + name row -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div class="photo-ring" onclick="triggerPhotoUpload()" title="Change photo">
+          <div class="av" id="s-av" style="width:58px;height:58px;background:#eff4ff;color:#2563eb;font-size:18px;border:2px solid #bfdbfe"></div>
+          <div class="photo-overlay"><span class="ico f sm" style="color:#fff">photo_camera</span></div>
+        </div>
+        <div>
+          <div id="s-name-disp" style="font-size:15px;font-weight:700"></div>
+          <div id="s-role-disp" style="font-size:12px;color:#94a3b8;margin-top:1px"></div>
+          <button onclick="triggerPhotoUpload()" style="margin-top:4px;font-size:11px;color:#2563eb;font-weight:700;border:none;background:none;cursor:pointer;padding:0">Change Photo</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Display Name</label><input id="s-name" class="inp" type="text" maxlength="30" placeholder="Your name"/></div>
+        <div><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Role / Title</label><input id="s-role" class="inp" type="text" maxlength="48" placeholder="e.g. Sales Manager"/></div>
+        <div><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Email</label><input id="s-email" class="inp" type="email" placeholder="you@company.com"/></div>
+        <button onclick="saveProfile()" style="width:100%;padding:12px;border-radius:12px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s;font-family:'DM Sans',sans-serif" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
+          <span class="ico sm">save</span> Save Profile
+        </button>
+      </div>
+    </div>
+
+    <!-- Customer record customization -->
+    <div class="card" style="padding:18px">
+      <div class="sec-label">Customer Record Fields</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">Toggle which fields appear on customer records and profiles. Add custom fields to capture extra info.</div>
+      <!-- Built-in field toggles -->
+      <div id="field-toggles" style="margin-bottom:14px"></div>
+      <!-- Custom fields manager -->
+      <div style="border-top:1px solid #f0f4ff;padding-top:12px">
+        <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px">Custom Fields</div>
+        <div id="custom-fields-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px">
+          <input id="new-cf-input" class="inp" style="flex:1;font-size:13px;padding:8px 12px" placeholder="e.g. LinkedIn, Budget…" maxlength="24" onkeydown="if(event.key==='Enter')addCustomField()"/>
+          <button onclick="addCustomField()" style="padding:8px 14px;border-radius:10px;border:none;background:#eff4ff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s;font-family:'DM Sans',sans-serif" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff4ff'">+ Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deal record customization -->
+    <div class="card" style="padding:18px">
+      <div class="sec-label">Deal Record Fields</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">Choose which deal fields are visible and add custom deal fields.</div>
+      <div id="deal-field-toggles" style="margin-bottom:14px"></div>
+      <div style="border-top:1px solid #f0f4ff;padding-top:12px">
+        <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:8px">Custom Deal Fields</div>
+        <div id="custom-deal-fields-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px">
+          <input id="new-dcf-input" class="inp" style="flex:1;font-size:13px;padding:8px 12px" placeholder="e.g. Source, Priority…" maxlength="24" onkeydown="if(event.key==='Enter')addDealCustomField()"/>
+          <button onclick="addDealCustomField()" style="padding:8px 14px;border-radius:10px;border:none;background:#eff4ff;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s;font-family:'DM Sans',sans-serif" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff4ff'">+ Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preferences -->
+    <div class="card" style="padding:18px">
+      <div class="sec-label">Preferences</div>
+      <div class="sep-row"><div><div style="font-size:13px;font-weight:600">Email Notifications</div><div style="font-size:11px;color:#94a3b8">Alerts for new leads</div></div><div class="tog on" id="tog-notif" onclick="togglePref('notif',this)"></div></div>
+      <div class="sep-row"><div><div style="font-size:13px;font-weight:600">Deal Reminders</div><div style="font-size:11px;color:#94a3b8">Nudge on stale deals</div></div><div class="tog on" id="tog-reminders" onclick="togglePref('reminders',this)"></div></div>
+      <div class="sep-row"><div><div style="font-size:13px;font-weight:600">Weekly Report</div><div style="font-size:11px;color:#94a3b8">Summary every Monday</div></div><div class="tog" id="tog-report" onclick="togglePref('report',this)"></div></div>
+    </div>
+
+    <!-- Data management -->
+    <div class="card" style="padding:18px">
+      <div class="sec-label">Data Management</div>
+      <div class="sep-row">
+        <div><div style="font-size:13px;font-weight:600">Customers</div><div id="s-c-count" style="font-size:11px;color:#94a3b8"></div></div>
+        <span style="font-size:12px;font-weight:700;color:#2563eb" id="s-c-val"></span>
+      </div>
+      <div class="sep-row">
+        <div><div style="font-size:13px;font-weight:600">Deals</div><div id="s-d-count" style="font-size:11px;color:#94a3b8"></div></div>
+        <span style="font-size:12px;font-weight:700;color:#2563eb" id="s-d-val"></span>
+      </div>
+      <div class="sep-row">
+        <div><div style="font-size:13px;font-weight:600">Storage Used</div></div>
+        <span id="s-storage" style="font-size:12px;font-weight:700;color:#64748b"></span>
+      </div>
+      <div style="padding-top:14px;display:flex;flex-direction:column;gap:8px">
+        <button onclick="confirmClear('customers')" class="danger-btn"><span class="ico sm">group_remove</span> Clear All Customers</button>
+        <button onclick="confirmClear('deals')" class="danger-btn"><span class="ico sm">remove_done</span> Clear All Deals</button>
+        <button onclick="confirmClear('all')" style="width:100%;padding:12px;border-radius:12px;border:none;background:#ef4444;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'DM Sans',sans-serif;transition:background .15s" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+          <span class="ico sm">delete_forever</span> Clear Everything
+        </button>
+      </div>
+    </div>
+
+    <!-- About -->
+    <div class="card" style="padding:18px">
+      <div class="sec-label">About</div>
+      <div class="sep-row"><span style="font-size:13px;font-weight:600">Version</span><span style="font-size:12px;font-weight:700;color:#94a3b8;font-family:'DM Mono',monospace">v4.0.0</span></div>
+      <div class="sep-row"><span style="font-size:13px;font-weight:600">Storage</span><span style="font-size:12px;font-weight:700;color:#94a3b8">localStorage</span></div>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nb" onclick="navigate('dashboard')"><span class="ico">dashboard</span>Home</button>
+    <button class="nb" onclick="navigate('directory')"><span class="ico">group</span>Customers</button>
+    <button class="nb" onclick="navigate('deals')"><span class="ico">handshake</span>Deals</button>
+    <button class="nb on" onclick="navigate('settings')"><span class="ico">settings</span>Settings</button>
+  </nav>
+</div>
+
+<!-- ░░░░░░░░░░░ CUSTOMER MODAL ░░░░░░░░░░░ -->
+<div class="sheet-wrap" id="cust-modal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="padding:16px 20px 32px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <span id="cm-title" style="font-size:16px;font-weight:800">Add Customer</span>
+        <button onclick="closeCustModal()" style="width:32px;height:32px;border-radius:8px;border:none;background:#f0f4ff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b"><span class="ico sm">close</span></button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Full Name *</label><input id="cf-name" class="inp" type="text" placeholder="Jane Smith"/><div id="ce-name" class="err-msg">Name is required</div></div>
+        <div><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Company *</label><input id="cf-company" class="inp" type="text" placeholder="Acme Corp"/><div id="ce-company" class="err-msg">Company is required</div></div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Status</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+            <button type="button" class="cst-opt" data-v="Active" onclick="pickCST(this)">✓ Active</button>
+            <button type="button" class="cst-opt" data-v="Lead" onclick="pickCST(this)">◈ Lead</button>
+            <button type="button" class="cst-opt" data-v="Inactive" onclick="pickCST(this)">○ Inactive</button>
+          </div>
+        </div>
+        <!-- Standard optional fields -->
+        <div id="cm-phone-row"><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Phone</label><input id="cf-phone" class="inp" type="tel" placeholder="+1 (234) 567-8901"/></div>
+        <div id="cm-email-row"><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Email</label><input id="cf-email" class="inp" type="email" placeholder="jane@acme.com"/></div>
+        <!-- Custom fields -->
+        <div id="cm-custom-fields"></div>
+        <div id="cm-notes-row"><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Notes</label><textarea id="cf-notes" class="inp" rows="3" placeholder="Any context…"></textarea></div>
+        <button onclick="saveCustomer()" style="width:100%;padding:13px;border-radius:13px;border:none;background:#2563eb;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'DM Sans',sans-serif;transition:background .15s" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
+          <span class="ico sm">save</span><span id="cm-btn-label">Save Customer</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░░░░░░░░░░ DEAL MODAL ░░░░░░░░░░░ -->
+<div class="sheet-wrap" id="deal-modal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div style="padding:16px 20px 32px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <span id="dm-title" style="font-size:16px;font-weight:800">Add Deal</span>
+        <button onclick="closeDealModal()" style="width:32px;height:32px;border-radius:8px;border:none;background:#f0f4ff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b"><span class="ico sm">close</span></button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Deal Title *</label><input id="df-title" class="inp" type="text" placeholder="e.g. Enterprise License Q4"/><div id="de-title" class="err-msg">Title is required</div></div>
+        <div><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Customer / Company *</label><input id="df-customer" class="inp" type="text" placeholder="Alice Johnson"/><div id="de-customer" class="err-msg">Customer is required</div></div>
+        <div id="dm-value-row"><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Value ($)</label><input id="df-value" class="inp" type="number" min="0" placeholder="0"/></div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Stage</label>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+            <button type="button" class="dst-opt" data-v="Prospect" onclick="pickDST(this)">Prospect</button>
+            <button type="button" class="dst-opt" data-v="Proposal" onclick="pickDST(this)">Proposal</button>
+            <button type="button" class="dst-opt" data-v="Negotiation" onclick="pickDST(this)">Negotiation</button>
+            <button type="button" class="dst-opt" data-v="Won" onclick="pickDST(this)">✓ Won</button>
+            <button type="button" class="dst-opt" data-v="Lost" onclick="pickDST(this)">✗ Lost</button>
+          </div>
+        </div>
+        <div id="dm-date-row"><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Close Date</label><input id="df-date" class="inp" type="date"/></div>
+        <!-- Custom deal fields -->
+        <div id="dm-custom-fields"></div>
+        <div id="dm-notes-row"><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Notes</label><textarea id="df-notes" class="inp" rows="2" placeholder="Any context…"></textarea></div>
+        <button onclick="saveDeal()" style="width:100%;padding:13px;border-radius:13px;border:none;background:#2563eb;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'DM Sans',sans-serif;transition:background .15s" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
+          <span class="ico sm">save</span><span id="dm-btn-label">Save Deal</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░░░░░░░░░░ CONFIRM MODAL ░░░░░░░░░░░ -->
+<div class="sheet-wrap" id="confirm-modal" style="align-items:center">
+  <div class="confirm-card">
+    <div id="conf-icon" style="width:56px;height:56px;border-radius:16px;background:#fee2e2;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+      <span class="ico f lg" style="color:#ef4444">delete_forever</span>
+    </div>
+    <div id="conf-title" style="font-size:17px;font-weight:800;margin-bottom:6px"></div>
+    <div id="conf-body" style="font-size:13px;color:#64748b;line-height:1.5;margin-bottom:20px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeConfirm()" style="flex:1;padding:12px;border-radius:12px;border:2px solid #e2e8f0;background:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;color:#475569;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">Cancel</button>
+      <button id="conf-ok" style="flex:1;padding:12px;border-radius:12px;border:none;background:#ef4444;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"><span id="toast-ico" class="ico f sm">check_circle</span><span id="toast-msg"></span></div>
+
+<style>
+/* Status option buttons */
+.cst-opt,.dst-opt{padding:9px 4px;border-radius:12px;border:2px solid #e2e8f0;background:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;color:#94a3b8}
+.cst-opt.on-Active,.dst-opt.on-Prospect{border-color:#93c5fd;background:#eff6ff;color:#2563eb}
+.cst-opt.on-Lead,.dst-opt.on-Proposal{border-color:#fcd34d;background:#fffbeb;color:#d97706}
+.cst-opt.on-Inactive{border-color:#cbd5e1;background:#f8fafc;color:#475569}
+.dst-opt.on-Negotiation{border-color:#c084fc;background:#faf5ff;color:#9333ea}
+.dst-opt.on-Won{border-color:#4ade80;background:#f0fdf4;color:#16a34a}
+.dst-opt.on-Lost{border-color:#f87171;background:#fef2f2;color:#ef4444}
+</style>
+
+<script>
+// ══════════════════ KEYS ══════════════════
+const K={c:'crm_c_v5',d:'crm_d_v5',u:'crm_u_v5',p:'crm_p_v5',cf:'crm_cf_v1',dcf:'crm_dcf_v1',photo:'crm_photo_v1',ftog:'crm_ftog_v1',dftog:'crm_dftog_v1'};
+
+// ══════════════════ DEFAULT DATA ══════════════════
+const DC=[
+  {id:'c1',name:'Alice Johnson',company:'Global Tech',status:'Active',phone:'+1 (234) 567-8901',email:'alice@globaltech.com',notes:'Key enterprise contact. Wants 50-seat expansion.',cf:{},createdAt:Date.now()-864e5*5,updatedAt:Date.now()-864e5*1},
+  {id:'c2',name:'Bob Smith',company:'Creative Co.',status:'Lead',phone:'+1 (345) 678-9012',email:'bob@creativeco.com',notes:'Met at Q3 conference.',cf:{},createdAt:Date.now()-864e5*4,updatedAt:Date.now()-864e5*2},
+  {id:'c3',name:'Charlie Davis',company:'Retail Ops',status:'Inactive',phone:'+1 (456) 789-0123',email:'charlie@retailops.com',notes:'Contract ended August.',cf:{},createdAt:Date.now()-864e5*3,updatedAt:Date.now()-864e5*3},
+  {id:'c4',name:'Emily White',company:'Nexus Solutions',status:'Active',phone:'+1 (567) 890-1234',email:'emily@nexus.com',notes:'Product champion. Renews Q4.',cf:{},createdAt:Date.now()-864e5*2,updatedAt:Date.now()-864e5*1},
+  {id:'c5',name:'Michael Klein',company:'Skyline Ltd.',status:'Lead',phone:'+1 (678) 901-2345',email:'michael@skyline.com',notes:'Inbound lead. Demo next week.',cf:{},createdAt:Date.now()-864e5*1,updatedAt:Date.now()-864e5*1},
+];
+const DD=[
+  {id:'d1',title:'Global Tech – Enterprise License',customer:'Alice Johnson',value:24000,stage:'Negotiation',date:'2024-11-30',notes:'Close by Q4.',cf:{},createdAt:Date.now()-864e5*3},
+  {id:'d2',title:'Creative Co. – Starter Plan',customer:'Bob Smith',value:3600,stage:'Proposal',date:'2024-12-15',notes:'Sent deck, awaiting reply.',cf:{},createdAt:Date.now()-864e5*2},
+  {id:'d3',title:'Retail Ops – Re-engagement',customer:'Charlie Davis',value:8000,stage:'Prospect',date:'2025-01-10',notes:'Cold outreach pending.',cf:{},createdAt:Date.now()-864e5*4},
+  {id:'d4',title:'Nexus Solutions – Renewal',customer:'Emily White',value:12000,stage:'Won',date:'2024-10-01',notes:'Contract signed.',cf:{},createdAt:Date.now()-864e5*5},
+  {id:'d5',title:'Skyline – Pilot Deal',customer:'Michael Klein',value:5000,stage:'Prospect',date:'2025-01-20',notes:'First demo next week.',cf:{},createdAt:Date.now()-864e5*1},
+];
+const DU={name:'Alex Rivera',role:'Sales Manager',email:'alex@company.com'};
+const DP={notif:true,reminders:true,report:false};
+const DFT={phone:true,email:true,notes:true}; // field toggles
+const DDFT={value:true,date:true,notes:true};
+
+// ══════════════════ STORAGE ══════════════════
+function ls(key,def){try{const r=localStorage.getItem(key);return r!==null?JSON.parse(r):def}catch(e){return def}}
+function lss(key,val){try{localStorage.setItem(key,JSON.stringify(val))}catch(e){toast('error','Storage full – photo may be too large')}}
+function gC(){const d=ls(K.c,null);if(!d){lss(K.c,DC);return JSON.parse(JSON.stringify(DC))}return d}
+function sC(a){lss(K.c,a)}
+function gD(){const d=ls(K.d,null);if(!d){lss(K.d,DD);return JSON.parse(JSON.stringify(DD))}return d}
+function sD(a){lss(K.d,a)}
+function gU(){return ls(K.u,DU)}
+function sU(u){lss(K.u,u)}
+function gP(){return ls(K.p,DP)}
+function sP(p){lss(K.p,p)}
+function gCF(){return ls(K.cf,[])} // custom customer fields
+function sCF(a){lss(K.cf,a)}
+function gDCF(){return ls(K.dcf,[])} // custom deal fields
+function sDCF(a){lss(K.dcf,a)}
+function gFT(){return ls(K.ftog,DFT)}
+function sFT(o){lss(K.ftog,o)}
+function gDFT(){return ls(K.dftog,DDFT)}
+function sDFT(o){lss(K.dftog,o)}
+function gPhoto(){return ls(K.photo,null)}
+function sPhoto(d){lss(K.photo,d)}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+
+// ══════════════════ HELPERS ══════════════════
+const AVCOLS=['#dbeafe #1d4ed8','#dcfce7 #15803d','#fef9c3 #a16207','#fce7f3 #be185d','#ede9fe #7c3aed','#ffedd5 #c2410c','#cffafe #0e7490'];
+function avStyle(id){const n=[...(id||'x')].reduce((a,c)=>a+c.charCodeAt(0),0);const[bg,col]=AVCOLS[n%AVCOLS.length].split(' ');return{bg,col}}
+function inits(name){return(name||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()}
+function sCls(s){return{Active:'b-active',Lead:'b-lead',Inactive:'b-inactive'}[s]||'b-inactive'}
+function stageCls(s){return{Prospect:'b-prospect',Proposal:'b-proposal',Negotiation:'b-negotiation',Won:'b-won',Lost:'b-lost'}[s]||'b-prospect'}
+function sdotCls(s){return{Active:'sd-active',Lead:'sd-lead',Inactive:'sd-inactive'}[s]||'sd-inactive'}
+function fmtDate(ts){if(!ts)return'—';return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function ago(ts){if(!ts)return'';const d=Date.now()-ts,m=Math.floor(d/6e4),h=Math.floor(d/36e5),dy=Math.floor(d/864e5);if(dy>30)return fmtDate(ts);if(dy>0)return dy===1?'Yesterday':`${dy}d ago`;if(h>0)return`${h}h ago`;if(m>0)return`${m}m ago`;return'Just now'}
+function money(v){const n=Number(v)||0;return n>=1000?`$${(n/1000).toFixed(n%1000?1:0)}k`:`$${n}`}
+
+function makeAv(el,id,name,photo,size=44,fs=15){
+  el.style.width=size+'px';el.style.height=size+'px';el.style.fontSize=fs+'px';
+  if(photo){el.innerHTML=`<img src="${photo}" alt="${name}"/>`;el.style.background='transparent';el.style.color='transparent'}
+  else{const{bg,col}=avStyle(id);el.style.background=bg;el.style.color=col;el.textContent=inits(name)}
+}
+
+// ══════════════════ PHOTO UPLOAD ══════════════════
+function triggerPhotoUpload(){document.getElementById('photo-input').click()}
+
+function handlePhotoUpload(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(file.size>2*1024*1024){toast('error','Image too large – max 2MB');return}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const data=ev.target.result;
+    sPhoto(data);
+    applyPhoto(data);
+    toast('photo_camera','Photo updated!');
+  };
+  reader.readAsDataURL(file);
+  e.target.value='';
+}
+
+function applyPhoto(data){
+  const dashAv=document.getElementById('dash-av');
+  const sAv=document.getElementById('s-av');
+  const u=gU();
+  if(data){
+    dashAv.innerHTML=`<img src="${data}" alt="${u.name}" style="width:100%;height:100%;object-fit:cover;border-radius:100px"/>`;
+    dashAv.style.background='transparent';dashAv.style.color='transparent';
+    sAv.innerHTML=`<img src="${data}" alt="${u.name}" style="width:100%;height:100%;object-fit:cover;border-radius:100px"/>`;
+    sAv.style.background='transparent';sAv.style.color='transparent';
+  } else {
+    const{bg,col}=avStyle('user');
+    dashAv.innerHTML='';dashAv.style.background=bg;dashAv.style.color=col;dashAv.textContent=inits(u.name);
+    sAv.innerHTML='';sAv.style.background=bg;sAv.style.color=col;sAv.textContent=inits(u.name);
+  }
+}
+
+// ══════════════════ NAVIGATION ══════════════════
+let prevScr='dashboard',curProfileId=null;
+
+function navigate(scr,dir='fwd'){
+  const cur=document.querySelector('.screen.active');
+  const tgt=document.getElementById('screen-'+scr);
+  if(!tgt||cur===tgt)return;
+  cur.classList.remove('active');cur.classList.add('prev');
+  tgt.classList.add('active');
+  setTimeout(()=>cur.classList.remove('prev'),260);
+  const R={dashboard:renderDash,directory:renderDir,deals:renderDeals,settings:renderSettings};
+  if(R[scr])R[scr]();
+}
+function goBack(){navigate(prevScr,'back')}
+function openProfile(id){
+  const c=gC().find(x=>x.id===id);if(!c)return;
+  prevScr=document.querySelector('.screen.active').id.replace('screen-','');
+  curProfileId=id;fillProfile(c);navigate('profile');
+}
+function fillProfile(c){
+  const photo=gPhoto(); // profiles use user photo concept; customers use initials
+  const pav=document.getElementById('p-av');
+  makeAv(pav,c.id,c.name,null,88,28);
+  document.getElementById('p-sdot').className=`sdot ${sdotCls(c.status)}`;
+  document.getElementById('p-name').textContent=c.name;
+  document.getElementById('p-co').textContent=c.company;
+  const badge=document.getElementById('p-badge');badge.textContent=c.status;badge.className=`badge ${sCls(c.status)}`;
+  document.getElementById('p-created').textContent=fmtDate(c.createdAt);
+  document.getElementById('p-updated').textContent=ago(c.updatedAt);
+
+  const ft=gFT();
+  // Standard fields
+  const pf=document.getElementById('p-fields');
+  let fhtml='';
+  if(ft.phone!==false)fhtml+=fieldRow('phone','Phone',c.phone||'Not set');
+  if(ft.email!==false)fhtml+=fieldRow('alternate_email','Email',c.email||'Not set');
+  pf.innerHTML=fhtml||'<div style="font-size:12px;color:#94a3b8">No fields enabled. Configure in Settings.</div>';
+
+  // Custom fields
+  const cfs=gCF();
+  const pcc=document.getElementById('p-custom-card');
+  const pcf=document.getElementById('p-custom-fields');
+  if(cfs.length>0){
+    pcc.style.display='';
+    pcf.innerHTML=cfs.map(f=>fieldRow('label','`'+f+'`',c.cf?.[f]||'—')).join('');
+  } else {pcc.style.display='none'}
+
+  // Notes
+  const pnotes=document.getElementById('p-notes');
+  if(ft.notes!==false){pnotes.textContent=c.notes?`"${c.notes}"`:'No notes yet.';pnotes.closest('.card').style.display=''}
+  else pnotes.closest('.card').style.display='none';
+
+  document.getElementById('p-edit-btn').onclick=()=>openCustModal(c.id);
+  document.getElementById('p-del-btn').onclick=()=>confirmDel('customer',c.id,c.name);
+}
+function fieldRow(icon,label,val){
+  return`<div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border-radius:10px;background:#f0f4ff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="ico sm" style="color:#94a3b8">${icon}</span></div><div><div style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em">${label}</div><div style="font-size:13px;font-weight:600;color:#0f172a;margin-top:1px">${val}</div></div></div>`;
+}
+
+// ══════════════════ DASHBOARD ══════════════════
+function renderDash(){
+  const u=gU(); const cs=gC(); const ds=gD();
+  // Name
+  document.getElementById('dash-name').value=u.name||'';
+  // Photo
+  const photo=gPhoto();
+  applyPhoto(photo);
+  // KPIs
+  const open=ds.filter(x=>x.stage!=='Won'&&x.stage!=='Lost');
+  document.getElementById('kpi-c').textContent=cs.length;
+  document.getElementById('kpi-d').textContent=open.length;
+  document.getElementById('kpi-r').textContent=money(open.reduce((s,x)=>s+(Number(x.value)||0),0));
+  // Chart
+  const hts=[45,70,35,90,60,80];const mos=['Jan','Feb','Mar','Apr','May','Jun'];
+  document.getElementById('dash-chart').innerHTML=mos.map((m,i)=>`
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="width:100%;background:${i===5?'#2563eb':'#bfdbfe'};border-radius:4px 4px 0 0;height:${hts[i]}%;transition:background .2s;cursor:pointer" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='${i===5?'#2563eb':'#bfdbfe'}'"></div>
+      <span style="font-size:9px;font-weight:700;color:#94a3b8">${m}</span>
+    </div>`).join('');
+  // Recent customers
+  const rc=document.getElementById('dash-recent');
+  const rcs=[...cs].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,3);
+  rc.innerHTML=rcs.length?rcs.map(c=>`
+    <div class="card card-hover" onclick="openProfile('${c.id}')" style="padding:12px 14px;display:flex;align-items:center;gap:10px">
+      <div class="av" id="dav-${c.id}" style="width:38px;height:38px;font-size:13px"></div>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div><div style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.company}</div></div>
+      <span class="badge ${sCls(c.status)}">${c.status}</span>
+    </div>`).join(''):'<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px">No customers yet</div>';
+  rcs.forEach(c=>{const el=document.getElementById('dav-'+c.id);if(el)makeAv(el,c.id,c.name,null,38,13)});
+  // Recent deals
+  const rd=document.getElementById('dash-deals');
+  const rds=[...ds].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,3);
+  rd.innerHTML=rds.length?rds.map(d=>`
+    <div class="card" style="padding:12px 14px;display:flex;align-items:center;gap:10px">
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.title}</div><div style="font-size:11px;color:#94a3b8">${d.customer}</div></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0"><span style="font-size:13px;font-weight:800;color:#0f172a">${money(d.value)}</span><span class="badge ${stageCls(d.stage)}">${d.stage}</span></div>
+    </div>`).join(''):'<div style="font-size:12px;color:#94a3b8;text-align:center;padding:12px">No deals yet</div>';
+}
+
+function onNameBlur(){
+  const val=document.getElementById('dash-name').value.trim();
+  if(!val)return;
+  const u=gU();u.name=val;sU(u);
+  applyPhoto(gPhoto());
+  toast('check_circle','Name saved!');
+}
+
+// ══════════════════ DIRECTORY ══════════════════
+let dirFilter='All',dirSearch='';
+
+function setDirFilter(f,btn){
+  dirFilter=f;
+  document.querySelectorAll('[id^="chip-"]').forEach(b=>{b.className='pill inactive'});
+  document.getElementById('chip-'+f).className='pill active';
+  renderDir();
+}
+function onDirSearch(q){dirSearch=q;document.getElementById('dir-clear').style.display=q?'':'none';renderDir()}
+function clearDirSearch(){dirSearch='';document.getElementById('dir-search').value='';document.getElementById('dir-clear').style.display='none';renderDir()}
+
+function renderDir(){
+  const all=gC();
+  const fil=all.filter(c=>{
+    const mf=dirFilter==='All'||c.status===dirFilter;
+    const q=dirSearch.toLowerCase();
+    return mf&&(!q||c.name.toLowerCase().includes(q)||c.company.toLowerCase().includes(q));
+  });
+  document.getElementById('dir-count').textContent=`${fil.length} record${fil.length!==1?'s':''}`;
+  const list=document.getElementById('dir-list');
+  if(!fil.length){
+    list.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;padding:60px 20px;gap:10px"><span class="ico lg f" style="color:#bfdbfe">person_search</span><div style="font-size:14px;font-weight:700;color:#475569">No customers found</div><button onclick="openCustModal()" style="margin-top:4px;padding:10px 20px;border-radius:100px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">+ Add Customer</button></div>`;
+    return;
+  }
+  list.innerHTML=fil.map(c=>`
+    <div class="card" style="overflow:hidden">
+      <div class="card-hover" onclick="openProfile('${c.id}')" style="padding:13px 14px;display:flex;align-items:center;gap:10px">
+        <div class="av" id="lav-${c.id}" style="width:42px;height:42px;font-size:14px;flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+          <div style="font-size:12px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.company}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <span class="badge ${sCls(c.status)}">${c.status}</span>
+          <span style="font-size:10px;color:#cbd5e1;font-weight:600">${ago(c.createdAt)}</span>
+        </div>
+      </div>
+      <div style="display:flex;border-top:1px solid #f0f4ff">
+        <button onclick="openCustModal('${c.id}')" style="flex:1;padding:9px;border:none;background:transparent;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'DM Sans',sans-serif;transition:background .15s;border-right:1px solid #f0f4ff" onmouseover="this.style.background='#eff4ff'" onmouseout="this.style.background='transparent'"><span class="ico sm">edit</span> Edit</button>
+        <button onclick="confirmDel('customer','${c.id}','${esc(c.name)}')" style="flex:1;padding:9px;border:none;background:transparent;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'DM Sans',sans-serif;transition:background .15s" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'"><span class="ico sm">delete</span> Delete</button>
+      </div>
+    </div>`).join('');
+  fil.forEach(c=>{const el=document.getElementById('lav-'+c.id);if(el)makeAv(el,c.id,c.name,null,42,14)});
+}
+
+function esc(s){return(s||'').replace(/'/g,"\\'")}
+
+// ══════════════════ CUSTOMER MODAL ══════════════════
+let editCId=null, selCST='Active', custCFVals={};
+
+function openCustModal(id=null){
+  editCId=id;
+  const c=id?gC().find(x=>x.id===id):null;
+  document.getElementById('cm-title').textContent=c?'Edit Customer':'Add Customer';
+  document.getElementById('cm-btn-label').textContent=c?'Save Changes':'Save Customer';
+  document.getElementById('cf-name').value=c?.name||'';document.getElementById('cf-name').classList.remove('error');
+  document.getElementById('cf-company').value=c?.company||'';document.getElementById('cf-company').classList.remove('error');
+  document.getElementById('cf-phone').value=c?.phone||'';
+  document.getElementById('cf-email').value=c?.email||'';
+  document.getElementById('cf-notes').value=c?.notes||'';
+  document.getElementById('ce-name').classList.remove('show');
+  document.getElementById('ce-company').classList.remove('show');
+  selCST=c?.status||'Active';updCST();
+  custCFVals=JSON.parse(JSON.stringify(c?.cf||{}));
+
+  // Apply field visibility
+  const ft=gFT();
+  document.getElementById('cm-phone-row').style.display=ft.phone!==false?'':'none';
+  document.getElementById('cm-email-row').style.display=ft.email!==false?'':'none';
+  document.getElementById('cm-notes-row').style.display=ft.notes!==false?'':'none';
+
+  // Custom fields
+  const cfs=gCF();
+  const cmcf=document.getElementById('cm-custom-fields');
+  cmcf.innerHTML=cfs.map(f=>`
+    <div><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">${f}</label>
+    <input id="ccf-${f}" class="inp" type="text" placeholder="Enter ${f}…" value="${c?.cf?.[f]||''}"/></div>`).join('');
+
+  openSheet('cust-modal');
+  setTimeout(()=>document.getElementById('cf-name').focus(),120);
+}
+function closeCustModal(){closeSheet('cust-modal')}
+function pickCST(btn){selCST=btn.dataset.v;updCST()}
+function updCST(){
+  document.querySelectorAll('.cst-opt').forEach(b=>{b.className='cst-opt'+(b.dataset.v===selCST?' on-'+selCST:'')});
+}
+
+function saveCustomer(){
+  const name=document.getElementById('cf-name').value.trim();
+  const company=document.getElementById('cf-company').value.trim();
+  let ok=true;
+  if(!name){document.getElementById('cf-name').classList.add('error');document.getElementById('ce-name').classList.add('show');ok=false}
+  if(!company){document.getElementById('cf-company').classList.add('error');document.getElementById('ce-company').classList.add('show');ok=false}
+  if(!ok)return;
+  const ft=gFT(); const cfs=gCF();
+  const cfObj={};cfs.forEach(f=>{cfObj[f]=document.getElementById('ccf-'+f)?.value.trim()||''});
+  const now=Date.now();
+  const all=gC();
+  const entry={
+    name,company,status:selCST,
+    phone:ft.phone!==false?document.getElementById('cf-phone').value.trim():'',
+    email:ft.email!==false?document.getElementById('cf-email').value.trim():'',
+    notes:ft.notes!==false?document.getElementById('cf-notes').value.trim():'',
+    cf:cfObj
+  };
+  if(editCId){
+    const i=all.findIndex(x=>x.id===editCId);
+    if(i!==-1)all[i]={...all[i],...entry,updatedAt:now};
+    sC(all);toast('check_circle','Customer updated!');
+    closeCustModal();
+    if(document.getElementById('screen-profile').classList.contains('active'))fillProfile(all[all.findIndex(x=>x.id===editCId)]);
+  }else{
+    all.unshift({id:genId(),...entry,createdAt:now,updatedAt:now});
+    sC(all);toast('person_add','Customer added!');closeCustModal();
+  }
+  renderDir();renderDash();
+}
+
+// ══════════════════ DEALS ══════════════════
+let dealsFilter='All';
+
+function setDealsFilter(f,btn){
+  dealsFilter=f;
+  document.querySelectorAll('[id^="dchip-"]').forEach(b=>b.className='pill inactive');
+  document.getElementById('dchip-'+f).className='pill active';
+  renderDeals();
+}
+
+function renderDeals(){
+  const all=gD();
+  const open=all.filter(x=>x.stage!=='Won'&&x.stage!=='Lost');
+  const won=all.filter(x=>x.stage==='Won');
+  const lost=all.filter(x=>x.stage==='Lost');
+  document.getElementById('deals-count').textContent=`${all.length} deal${all.length!==1?'s':''}`;
+  document.getElementById('dk-open').textContent=open.length;
+  document.getElementById('dk-won').textContent=won.length;
+  document.getElementById('dk-lost').textContent=lost.length;
+  document.getElementById('dk-val').textContent=money(open.reduce((s,x)=>s+(Number(x.value)||0),0));
+  const fil=dealsFilter==='All'?all:all.filter(d=>d.stage===dealsFilter);
+  const list=document.getElementById('deals-list');
+  if(!fil.length){
+    list.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;padding:60px 20px;gap:10px"><span class="ico lg f" style="color:#bfdbfe">handshake</span><div style="font-size:14px;font-weight:700;color:#475569">No deals found</div><button onclick="openDealModal()" style="margin-top:4px;padding:10px 20px;border-radius:100px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">+ Add Deal</button></div>`;
+    return;
+  }
+  const dft=gDFT(); const dcfs=gDCF();
+  list.innerHTML=fil.map(d=>`
+    <div class="card" style="overflow:hidden">
+      <div style="padding:14px 14px 10px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.title}</div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px">${d.customer}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+            ${dft.value!==false?`<div style="font-size:15px;font-weight:800;color:#0f172a">${money(d.value)}</div>`:''}
+            <span class="badge ${stageCls(d.stage)}">${d.stage}</span>
+          </div>
+        </div>
+        ${dft.date!==false&&d.date?`<div style="font-size:11px;color:#94a3b8;font-weight:600;margin-bottom:6px">Close: ${d.date}</div>`:''}
+        ${dcfs.map(f=>d.cf?.[f]?`<div style="font-size:11px;color:#64748b;margin-bottom:2px"><span style="font-weight:700;color:#94a3b8">${f}:</span> ${d.cf[f]}</div>`:'').join('')}
+        ${dft.notes!==false&&d.notes?`<div style="font-size:12px;color:#94a3b8;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">"${d.notes}"</div>`:''}
+        <div style="font-size:10px;color:#cbd5e1;font-weight:600;margin-top:8px;text-align:right">${ago(d.createdAt)}</div>
+      </div>
+      <div style="display:flex;border-top:1px solid #f0f4ff">
+        <button onclick="openDealModal('${d.id}')" style="flex:1;padding:9px;border:none;background:transparent;color:#2563eb;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'DM Sans',sans-serif;transition:background .15s;border-right:1px solid #f0f4ff" onmouseover="this.style.background='#eff4ff'" onmouseout="this.style.background='transparent'"><span class="ico sm">edit</span> Edit</button>
+        <button onclick="confirmDel('deal','${d.id}','${esc(d.title)}')" style="flex:1;padding:9px;border:none;background:transparent;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'DM Sans',sans-serif;transition:background .15s" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'"><span class="ico sm">delete</span> Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════ DEAL MODAL ══════════════════
+let editDId=null, selDST='Prospect';
+
+function openDealModal(id=null){
+  editDId=id;
+  const d=id?gD().find(x=>x.id===id):null;
+  document.getElementById('dm-title').textContent=d?'Edit Deal':'Add Deal';
+  document.getElementById('dm-btn-label').textContent=d?'Save Changes':'Save Deal';
+  document.getElementById('df-title').value=d?.title||'';
+  document.getElementById('df-customer').value=d?.customer||'';
+  document.getElementById('df-value').value=d?.value||'';
+  document.getElementById('df-date').value=d?.date||'';
+  document.getElementById('df-notes').value=d?.notes||'';
+  document.getElementById('de-title').classList.remove('show');
+  document.getElementById('de-customer').classList.remove('show');
+  selDST=d?.stage||'Prospect';updDST();
+
+  const dft=gDFT();
+  document.getElementById('dm-value-row').style.display=dft.value!==false?'':'none';
+  document.getElementById('dm-date-row').style.display=dft.date!==false?'':'none';
+  document.getElementById('dm-notes-row').style.display=dft.notes!==false?'':'none';
+
+  // Custom deal fields
+  const dcfs=gDCF();
+  document.getElementById('dm-custom-fields').innerHTML=dcfs.map(f=>`
+    <div><label style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">${f}</label>
+    <input id="dcf-${f}" class="inp" type="text" placeholder="Enter ${f}…" value="${d?.cf?.[f]||''}"/></div>`).join('');
+
+  openSheet('deal-modal');
+  setTimeout(()=>document.getElementById('df-title').focus(),120);
+}
+function closeDealModal(){closeSheet('deal-modal')}
+function pickDST(btn){selDST=btn.dataset.v;updDST()}
+function updDST(){document.querySelectorAll('.dst-opt').forEach(b=>{b.className='dst-opt'+(b.dataset.v===selDST?' on-'+selDST:'')})}
+
+function saveDeal(){
+  const title=document.getElementById('df-title').value.trim();
+  const customer=document.getElementById('df-customer').value.trim();
+  let ok=true;
+  if(!title){document.getElementById('de-title').classList.add('show');ok=false}
+  if(!customer){document.getElementById('de-customer').classList.add('show');ok=false}
+  if(!ok)return;
+  const dft=gDFT(); const dcfs=gDCF();
+  const cfObj={};dcfs.forEach(f=>{cfObj[f]=document.getElementById('dcf-'+f)?.value.trim()||''});
+  const all=gD(); const now=Date.now();
+  const entry={title,customer,stage:selDST,
+    value:dft.value!==false?Number(document.getElementById('df-value').value)||0:0,
+    date:dft.date!==false?document.getElementById('df-date').value:'',
+    notes:dft.notes!==false?document.getElementById('df-notes').value.trim():'',
+    cf:cfObj
+  };
+  if(editDId){
+    const i=all.findIndex(x=>x.id===editDId);
+    if(i!==-1)all[i]={...all[i],...entry};
+    sD(all);toast('check_circle','Deal updated!');
+  }else{
+    all.unshift({id:genId(),...entry,createdAt:now});
+    sD(all);toast('handshake','Deal added!');
+  }
+  closeDealModal();renderDeals();renderDash();
+}
+
+// ══════════════════ SETTINGS ══════════════════
+const BUILT_IN_FIELDS=[{k:'phone',label:'Phone'},{k:'email',label:'Email'},{k:'notes',label:'Notes'}];
+const BUILT_IN_DEAL_FIELDS=[{k:'value',label:'Deal Value'},{k:'date',label:'Close Date'},{k:'notes',label:'Notes'}];
+
+function renderSettings(){
+  const u=gU(); const p=gP(); const cfs=gCF(); const dcfs=gDCF();
+  const cs=gC(); const ds=gD(); const ft=gFT(); const dft=gDFT();
+  // Profile
+  document.getElementById('s-name').value=u.name||'';
+  document.getElementById('s-role').value=u.role||'';
+  document.getElementById('s-email').value=u.email||'';
+  document.getElementById('s-name-disp').textContent=u.name||'—';
+  document.getElementById('s-role-disp').textContent=u.role||'Sales Rep';
+  const photo=gPhoto();
+  applyPhoto(photo);
+
+  // Prefs
+  ['notif','reminders','report'].forEach(k=>{
+    const el=document.getElementById('tog-'+k);
+    el.className='tog'+(p[k]?' on':'');
+  });
+
+  // Customer field toggles
+  document.getElementById('field-toggles').innerHTML=BUILT_IN_FIELDS.map(f=>`
+    <div class="sep-row">
+      <div style="font-size:13px;font-weight:600">${f.label}</div>
+      <div class="tog ${ft[f.k]!==false?' on':''}" id="ftog-${f.k}" onclick="toggleField('${f.k}',this)"></div>
+    </div>`).join('');
+
+  // Customer custom fields
+  renderCustomFieldsList(cfs);
+
+  // Deal field toggles
+  document.getElementById('deal-field-toggles').innerHTML=BUILT_IN_DEAL_FIELDS.map(f=>`
+    <div class="sep-row">
+      <div style="font-size:13px;font-weight:600">${f.label}</div>
+      <div class="tog ${dft[f.k]!==false?' on':''}" id="dftog-${f.k}" onclick="toggleDealField('${f.k}',this)"></div>
+    </div>`).join('');
+
+  // Deal custom fields
+  renderDealCustomFieldsList(dcfs);
+
+  // Data counts
+  document.getElementById('s-c-count').textContent=`${cs.length} record${cs.length!==1?'s':''}`;
+  document.getElementById('s-d-count').textContent=`${ds.length} record${ds.length!==1?'s':''}`;
+  document.getElementById('s-c-val').textContent=cs.length;
+  document.getElementById('s-d-val').textContent=ds.length;
+  let bytes=0;try{Object.keys(localStorage).forEach(k=>{bytes+=k.length+(localStorage.getItem(k)||'').length})}catch(e){}
+  document.getElementById('s-storage').textContent=`${(bytes/1024).toFixed(1)} KB`;
+}
+
+function renderCustomFieldsList(cfs){
+  document.getElementById('custom-fields-list').innerHTML=cfs.map(f=>`
+    <div class="cf-chip">${f}<span class="del" onclick="removeCustomField('${f}')">✕</span></div>`).join('')||'<span style="font-size:11px;color:#cbd5e1">None added yet</span>';
+}
+function renderDealCustomFieldsList(dcfs){
+  document.getElementById('custom-deal-fields-list').innerHTML=dcfs.map(f=>`
+    <div class="cf-chip">${f}<span class="del" onclick="removeDealCustomField('${f}')">✕</span></div>`).join('')||'<span style="font-size:11px;color:#cbd5e1">None added yet</span>';
+}
+
+function addCustomField(){
+  const inp=document.getElementById('new-cf-input');
+  const val=inp.value.trim();
+  if(!val)return;
+  const cfs=gCF();
+  if(cfs.includes(val)){toast('error','Field already exists');return}
+  cfs.push(val);sCF(cfs);inp.value='';
+  renderCustomFieldsList(cfs);
+  toast('add_circle','Custom field added!');
+}
+function removeCustomField(f){
+  const cfs=gCF().filter(x=>x!==f);sCF(cfs);renderCustomFieldsList(cfs);toast('remove_circle','Field removed');
+}
+function addDealCustomField(){
+  const inp=document.getElementById('new-dcf-input');
+  const val=inp.value.trim();
+  if(!val)return;
+  const dcfs=gDCF();
+  if(dcfs.includes(val)){toast('error','Field already exists');return}
+  dcfs.push(val);sDCF(dcfs);inp.value='';
+  renderDealCustomFieldsList(dcfs);
+  toast('add_circle','Deal field added!');
+}
+function removeDealCustomField(f){
+  const dcfs=gDCF().filter(x=>x!==f);sDCF(dcfs);renderDealCustomFieldsList(dcfs);toast('remove_circle','Field removed');
+}
+
+function toggleField(key,el){
+  const ft=gFT();ft[key]=!(ft[key]!==false);sFT(ft);
+  el.className='tog'+(ft[key]?' on':'');
+}
+function toggleDealField(key,el){
+  const dft=gDFT();dft[key]=!(dft[key]!==false);sDFT(dft);
+  el.className='tog'+(dft[key]?' on':'');
+}
+function togglePref(key,el){const p=gP();p[key]=!p[key];sP(p);el.className='tog'+(p[key]?' on':'')}
+
+function saveProfile(){
+  const name=document.getElementById('s-name').value.trim();
+  if(!name){toast('error','Name cannot be empty');return}
+  const role=document.getElementById('s-role').value.trim();
+  const email=document.getElementById('s-email').value.trim();
+  sU({name,role,email});
+  document.getElementById('s-name-disp').textContent=name;
+  document.getElementById('s-role-disp').textContent=role||'—';
+  document.getElementById('dash-name').value=name;
+  applyPhoto(gPhoto());
+  toast('check_circle','Profile saved!');
+}
+
+// ══════════════════ CONFIRM / DELETE ══════════════════
+let confCB=null;
+function confirmDel(type,id,name){
+  const cfg={
+    customer:{title:'Delete Customer?',body:`<b>${name}</b> will be permanently removed from your records.`,ok:'Delete Customer'},
+    deal:{title:'Delete Deal?',body:`<b>${name}</b> will be permanently deleted.`,ok:'Delete Deal'},
+  };
+  const c=cfg[type]||{title:'Delete?',body:'This cannot be undone.',ok:'Delete'};
+  document.getElementById('conf-title').textContent=c.title;
+  document.getElementById('conf-body').innerHTML=c.body+'<br><br><span style="color:#ef4444;font-size:12px;font-weight:700">⚠ This cannot be undone.</span>';
+  document.getElementById('conf-ok').textContent=c.ok;
+  confCB=()=>{
+    if(type==='customer'){sC(gC().filter(c=>c.id!==id));toast('delete','Customer deleted');renderDir();renderDash();if(document.getElementById('screen-profile').classList.contains('active'))navigate('directory')}
+    else if(type==='deal'){sD(gD().filter(d=>d.id!==id));toast('delete','Deal deleted');renderDeals();renderDash()}
+  };
+  openSheet('confirm-modal');
+}
+function confirmClear(what){
+  const cfg={
+    customers:{title:'Clear All Customers?',body:'All <b>customer records</b> will be permanently deleted. Deals will remain.'},
+    deals:{title:'Clear All Deals?',body:'All <b>deal records</b> will be permanently deleted. Customers will remain.'},
+    all:{title:'Clear Everything?',body:'All <b>customers, deals, and settings</b> will be wiped. This resets the app completely.'},
+  };
+  const c=cfg[what];
+  document.getElementById('conf-title').textContent=c.title;
+  document.getElementById('conf-body').innerHTML=c.body+'<br><br><span style="color:#ef4444;font-size:12px;font-weight:700">⚠ This cannot be undone.</span>';
+  document.getElementById('conf-ok').textContent='Clear Now';
+  confCB=()=>{
+    if(what==='customers'){sC([]);toast('delete','All customers cleared')}
+    else if(what==='deals'){sD([]);toast('delete','All deals cleared')}
+    else{sC([]);sD([]);sU(DU);sP(DP);sCF([]);sDCF([]);sFT(DFT);sDFT(DDFT);sPhoto(null);toast('delete','Everything cleared — app reset')}
+    renderDash();renderDir();renderDeals();renderSettings();
+  };
+  openSheet('confirm-modal');
+}
+function closeConfirm(){closeSheet('confirm-modal');confCB=null}
+document.getElementById('conf-ok').onclick=()=>{if(confCB)confCB();closeConfirm()};
+
+// ══════════════════ SHEET HELPERS ══════════════════
+function openSheet(id){document.getElementById(id).classList.add('open')}
+function closeSheet(id){document.getElementById(id).classList.remove('open')}
+['cust-modal','deal-modal','confirm-modal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeSheet(id)});
+});
+
+// ══════════════════ TOAST ══════════════════
+let toastTimer=null;
+function toast(icon,msg){
+  const el=document.getElementById('toast');
+  document.getElementById('toast-ico').textContent=icon;
+  document.getElementById('toast-msg').textContent=msg;
+  el.classList.add('show');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+// ══════════════════ INIT ══════════════════
+gC();gD(); // seed defaults if first run
+const _u=gU();
+document.getElementById('dash-name').value=_u.name||'';
+applyPhoto(gPhoto());
+renderDash();
+</script>
+</body>
+</html>
